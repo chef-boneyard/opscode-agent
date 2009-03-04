@@ -39,18 +39,21 @@ module Opscode
 
     def index(payload)
       paths = JSON.parse(payload)
-      res = Mash.new
+      res = Hash.new
       paths.each do |path|
-        parts = path.split("/"); parts.shift if parts[0].length == 0
+        parts = path.split("/")
+        unless parts[0].nil?
+          parts.shift if parts[0].length == 0
+        end
         res[path] = ohai_walk(parts, false)
       end
       res
     end
 
     def ohai_walk(path, refresh)
-      @@ohai.refresh_plugins(path.join('/')) if refresh
+      @@ohai.refresh_plugins("/#{path.join('/')}") if refresh
       unless path[0]
-        @@ohai.json_pretty_print
+        @@ohai.to_json
       else
         ohai_walk_r(@@ohai, path)
       end
