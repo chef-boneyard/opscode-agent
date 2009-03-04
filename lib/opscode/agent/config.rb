@@ -23,6 +23,7 @@ module Opscode
     class Config
       @configuration = {
         :name => 'opscode-agent',
+        :http_port => 8000,
         :daemonize => false,
         :nanite_host => 'localhost',
         :nanite_user => 'nanite',
@@ -30,8 +31,9 @@ module Opscode
         :nanite_vhost => '/nanite',
         :nanite_token => nil,
         :schedule => {
-          "/network/interfaces" => 5,
-          "/" => 86400
+          "/counters" => 10,
+          "/" => 86400,
+          "/network" => 300
         }
       }
       
