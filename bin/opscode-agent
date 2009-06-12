@@ -57,6 +57,7 @@ require 'opscode/agent/http_service'
 # "async_for_rack" branch.
 
 EM.run do
+  AMQP.logging = true
   agent = Opscode::Agent::CLI.new
   agent.run
   Rack::Handler::Thin.run Opscode::Agent::HttpService.new(agent), :Port => Opscode::Agent::Config[:http_port]

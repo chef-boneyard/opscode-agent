@@ -23,7 +23,7 @@ module Opscode
   class OhaiActor
     include Nanite::Actor
     
-    expose :index
+    expose :index, :packages_available, :packages_installed
 
     @@ohai = nil
     

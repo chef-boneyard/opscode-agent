@@ -22,6 +22,7 @@ require 'chef/runner'
 require 'chef/resource_collection'
 require 'stringio'
 require 'opscode/agent/config'
+require 'tempfile'
 
 module Opscode
   class ChefActor
@@ -37,38 +38,61 @@ module Opscode
     end
 
     def collection(payload)
-      log_to_string do
-        node = Chef::Client.new.build_node
-        resource_collection = JSON.parse(payload)
+      node = Chef::Client.new.build_node
+      lts = log_to_string do
+        resource_collection = payload 
+        resource_collection.each { |r| r.instance_variable_set(:@node, node) }
         runner = Chef::Runner.new(node, resource_collection)
         runner.converge
       end
+      { :log => lts, :resource => payload[:resource] } 
     end
 
     def resource(payload)
-      log_to_string do
-        collection = Chef::ResourceCollection.new()
-        collection << JSON.parse(payload)
-        node = Chef::Client.new.build_node
-        runner = Chef::Runner.new(node, collection)
-        runner.converge
+      Chef::Log.level(:debug)
+      client = Chef::Client.new
+      client.build_node
+      payload[:resource].instance_variable_set(:@node, client.node)
+      lts = log_to_string do
+        payload[:resource].run_action(payload[:resource].action)
       end
+      { :log => lts, :resource => payload[:resource] } 
+    end
+
+    def check_recipe(payload)
+      orig_cookbook_path = Chef::Cookbook
+      Chef::Log.level(:debug)
+      client = Chef::Client.new
+      client.build_node
+      client.node
+      tf = Tempfile.new("test-recipe")
+      tf.write(payload)
+      tf.close
+      recipe = Chef::Recipe.new('temp', 'recipe', client.node)
+      recipe.from_file(tf.path)
+      ra = Array.new
+      recipe.collection.each { |r| ra << r }
+      { :resources => ra }
     end
 
     def recipe(payload)
-      log_to_string do
-        collection = Chef::ResourceCollection.new()
-        collection << JSON.parse(payload)
+      tf = Tempfile.new("test-recipe")
+      tf.write(payload)
+      tf.close
+      Chef::Log.level(:info)
+      collection = nil 
+      
+      lts = log_to_string do
         client = Chef::Client.new
         client.build_node
-        client.register
-        client.authenticate
-        client.sync_library_files
-        client.sync_attribute_files
-        client.sync_definitions
-        client.sync_recipes
-        client.converge
+        client.node
+        recipe = Chef::Recipe.new('temp', 'recipe', client.node)
+        recipe.from_file(tf.path)
+        runner = Chef::Runner.new(client.node, recipe.collection)
+        runner.converge
+        collection = recipe.collection
       end
+      { :log => lts, :resources => collection }
     end
 
     def converge(payload)

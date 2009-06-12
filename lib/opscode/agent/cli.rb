@@ -40,6 +40,9 @@ module Opscode
         opts.on("-L LOGLOCATION", "--logfile LOGLOCATION", "Set the log file location, defaults to STDOUT - recommended for daemonizing") do |lf|
           @config[:log_location] = lf
         end
+        opts.on("--nanite-identity ID", "The nanite identity") do |n|
+          @config[:identity] = n
+        end
         opts.on("--nanite-host HOST", "The nanite exchange host") do |n|
           @config[:host] = n
         end
@@ -70,6 +73,7 @@ module Opscode
           :pass => Opscode::Agent::Config[:nanite_pass],
           :vhost => Opscode::Agent::Config[:nanite_vhost],
           :daemonize => Opscode::Agent::Config[:daemonize],
+          :identity => Opscode::Agent::Config[:identity],
           :name => Opscode::Agent::Config[:name]
         }
         $0 = "#{@config[:name]} #{argv.join(' ')}\0"

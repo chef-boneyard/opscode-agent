@@ -30,6 +30,7 @@ module Opscode
         :nanite_pass => 'testing',
         :nanite_vhost => '/nanite',
         :nanite_token => nil,
+        :identity => nil,
         :schedule => {
           "/counters" => 10,
           "/" => 86400,
